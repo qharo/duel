@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duel - P2P Room</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #ff6b6b;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #ff5252;
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .room-key-display {
+            background: #252525;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+        }
+
+        .room-key {
+            font-size: 20px;
+            font-family: monospace;
+            color: #ff6b6b;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #444;
+        }
+
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #252525;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        input[type="text"]::placeholder {
+            color: #666;
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status.waiting {
+            background: #2a2a2a;
+            color: #888;
+        }
+
+        .status.connecting {
+            background: #2a2a1a;
+            color: #ffaa00;
+        }
+
+        .status.connected {
+            background: #1a2a1a;
+            color: #4caf50;
+        }
+
+        .status.error {
+            background: #2a1a1a;
+            color: #ff6b6b;
+        }
+
+        /* Chat styles */
+        .chat-container {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding-bottom: 16px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 16px;
+        }
+
+        .chat-header .room-id {
+            font-family: monospace;
+            color: #ff6b6b;
+            font-size: 14px;
+        }
+
+        .chat-header .connection-status {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 4px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            max-width: 80%;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            background: #ff6b6b;
+            color: #fff;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received {
+            background: #333;
+            color: #fff;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .meta {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .chat-input-container .btn {
+            width: auto;
+            margin-bottom: 0;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .back-btn:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Landing View -->
+            <div id="landing-view">
+                <h1>⚔️ Duel</h1>
+                <p class="subtitle">P2P Room Connector</p>
+                <button class="btn btn-primary" onclick="createRoom()">Create Room</button>
+                <button class="btn btn-secondary" onclick="showJoinView()">Join Room</button>
+            </div>
+
+            <!-- Create Room View -->
+            <div id="create-view" class="hidden">
+                <h1>Room Created</h1>
+                <p class="subtitle">Share this key with your opponent</p>
+                <div class="room-key-display">
+                    <div class="room-key" id="room-key-text"></div>
+                    <button class="copy-btn" onclick="copyRoomKey()">Copy Key</button>
+                </div>
+                <div class="status waiting" id="create-status">Waiting for opponent to join...</div>
+                <button class="btn btn-secondary" onclick="reset()">Back</button>
+            </div>
+
+            <!-- Join Room View -->
+            <div id="join-view" class="hidden">
+                <h1>Join Room</h1>
+                <p class="subtitle">Enter the room key</p>
+                <input type="text" id="room-key-input" placeholder="duel-xxxxx" autocomplete="off">
+                <button class="btn btn-primary" onclick="joinRoom()">Connect</button>
+                <button class="btn btn-secondary" onclick="reset()">Back</button>
+                <div class="status hidden" id="join-status"></div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="chat-view" class="hidden">
+                <button class="back-btn" onclick="reset()">← Leave</button>
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="room-id" id="chat-room-id"></div>
+                        <div class="connection-status" id="connection-status">Connected</div>
+                    </div>
+                    <div class="messages" id="messages"></div>
+                    <div class="chat-input-container">
+                        <input type="text" id="message-input" placeholder="Type a message..." onkeypress="handleMessageKeypress(event)">
+                        <button class="btn btn-primary" onclick="sendMessage()" style="width: auto;">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peer = null;
+        let conn = null;
+        let roomKey = null;
+        let isHost = false;
+
+        function generateRoomKey() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let key = 'duel-';
+            for (let i = 0; i < 10; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return key;
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.card > div').forEach(div => {
+                div.classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        function createRoom() {
+            roomKey = generateRoomKey();
+            isHost = true;
+            
+            document.getElementById('room-key-text').textContent = roomKey;
+            showView('create-view');
+            updateStatus('create-status', 'waiting', 'Waiting for opponent to join...');
+
+            peer = new Peer(roomKey);
+
+            peer.on('open', (id) => {
+                console.log('Host peer opened with ID:', id);
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (err.type === 'unavailable-id') {
+                    updateStatus('create-status', 'error', 'Room already exists!');
+                } else if (err.type === 'peer-unavailable') {
+                    updateStatus('create-status', 'error', 'Room not found');
+                } else {
+                    updateStatus('create-status', 'error', 'Connection error: ' + err.type);
+                }
+            });
+        }
+
+        function showJoinView() {
+            showView('join-view');
+            document.getElementById('room-key-input').value = '';
+            document.getElementById('room-key-input').focus();
+        }
+
+        function joinRoom() {
+            const inputKey = document.getElementById('room-key-input').value.trim().toLowerCase();
+            
+            if (!inputKey) {
+                updateStatus('join-status', 'error', 'Please enter a room key');
+                return;
+            }
+
+            if (!inputKey.startsWith('duel-')) {
+                updateStatus('join-status', 'error', 'Invalid room key format');
+                return;
+            }
+
+            roomKey = inputKey;
+            isHost = false;
+            
+            showView('join-view');
+            updateStatus('join-status', 'connecting', 'Connecting to room...');
+
+            peer = new Peer();
+
+            peer.on('open', () => {
+                conn = peer.connect(roomKey);
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                if (err.type === 'peer-unavailable') {
+                    updateStatus('join-status', 'error', 'Room not found');
+                } else {
+                    updateStatus('join-status', 'error', 'Connection error: ' + err.type);
+                }
+            });
+        }
+
+        function setupConnection() {
+            conn.on('open', () => {
+                console.log('Connection opened!');
+                if (isHost) {
+                    updateStatus('create-status', 'connected', 'Opponent joined!');
+                } else {
+                    updateStatus('join-status', 'connected', 'Connected to room!');
+                }
+                
+                setTimeout(() => {
+                    showChatView();
+                }, 500);
+            });
+
+            conn.on('data', (data) => {
+                receiveMessage(data);
+            });
+
+            conn.on('close', () => {
+                document.getElementById('connection-status').textContent = 'Disconnected';
+                document.getElementById('connection-status').style.color = '#ff6b6b';
+            });
+        }
+
+        function showChatView() {
+            document.getElementById('chat-room-id').textContent = roomKey;
+            document.getElementById('messages').innerHTML = '';
+            showView('chat-view');
+            document.getElementById('message-input').focus();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (message && conn && conn.open) {
+                const messageData = {
+                    text: message,
+                    timestamp: Date.now()
+                };
+                
+                conn.send(messageData);
+                displayMessage(messageData, 'sent');
+                input.value = '';
+            }
+        }
+
+        function receiveMessage(data) {
+            displayMessage(data, 'received');
+        }
+
+        function displayMessage(data, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                ${escapeHtml(data.text)}
+                <div class="meta">${time}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function handleMessageKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function copyRoomKey() {
+            navigator.clipboard.writeText(roomKey).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy Key';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function updateStatus(elementId, status, message) {
+            const el = document.getElementById(elementId);
+            el.className = `status ${status}`;
+            el.textContent = message;
+            el.classList.remove('hidden');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function reset() {
+            if (conn) {
+                conn.close();
+                conn = null;
+            }
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            roomKey = null;
+            isHost = false;
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('join-status').classList.add('hidden');
+            showView('landing-view');
+        }
+    </script>
+</body>
+</html>
