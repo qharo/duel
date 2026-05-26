@@ -5,990 +5,154 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vintage Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-pink': '#ff2d78',
+                        'neon-cyan': '#00d4ff',
+                        'neon-yellow': '#f1c40f',
+                    },
+                    fontFamily: {
+                        'pixel': ['"Press Start 2P"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg: #0a0a0a;
-            --surface: #111116;
-            --surface2: #1a1a2e;
-            --neon-pink: #ff2d78;
-            --neon-cyan: #00d4ff;
-            --neon-yellow: #f1c40f;
-            --text: #e0e0e0;
-            --text-dim: #666;
-            --text-bright: #fff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Press Start 2P', monospace;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow: hidden;
-            -webkit-font-smoothing: none;
-            -moz-osx-font-smoothing: unset;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body::after {
             content: '';
             position: fixed;
             inset: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0,0,0,0.12) 0px,
-                rgba(0,0,0,0.12) 1px,
-                transparent 1px,
-                transparent 3px
-            );
-            pointer-events: none;
-            z-index: 100;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 3px);
+            pointer-events: none; z-index: 100;
         }
-
-        .view {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1;
-        }
-
-        .view.hidden {
-            display: none;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 520px;
-            padding: 24px;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 22px;
-            color: var(--neon-pink);
-            text-shadow: 0 0 20px rgba(255,45,120,0.6), 0 0 60px rgba(255,45,120,0.3);
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        h2 {
-            font-size: 14px;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 15px rgba(0,212,255,0.5);
-            margin-bottom: 16px;
-            line-height: 1.6;
-        }
-
-        .subtitle {
-            font-size: 9px;
-            color: var(--text-dim);
-            margin-bottom: 32px;
-            letter-spacing: 2px;
-        }
-
-        .btn {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 11px;
-            padding: 16px 24px;
-            border: 3px solid var(--neon-pink);
-            background: transparent;
-            color: var(--neon-pink);
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all 0.15s;
-            width: 100%;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
-        }
-
-        .btn:hover {
-            background: var(--neon-pink);
-            color: var(--bg);
-            box-shadow: 0 0 20px rgba(255,45,120,0.5), inset 0 0 20px rgba(255,45,120,0.2);
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        .btn-secondary {
-            border-color: var(--text-dim);
-            color: var(--text-dim);
-        }
-
-        .btn-secondary:hover {
-            background: var(--text-dim);
-            color: var(--bg);
-            box-shadow: none;
-        }
-
-        .btn-start {
-            font-size: 14px;
-            border-color: var(--neon-yellow);
-            color: var(--neon-yellow);
-            animation: pulse-glow 1.5s infinite;
-            margin-top: 16px;
-        }
-
-        .btn-start:hover {
-            background: var(--neon-yellow);
-            color: var(--bg);
-            box-shadow: 0 0 30px rgba(241,196,15,0.6);
-        }
-
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 0 5px rgba(241,196,15,0.3); }
             50% { box-shadow: 0 0 25px rgba(241,196,15,0.7); }
         }
-
-        .back-btn {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 9px;
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            cursor: pointer;
-            margin-bottom: 24px;
-            padding: 8px 0;
-            display: inline-block;
-        }
-
-        .back-btn:hover {
-            color: var(--text);
-        }
-
-        /* Game Cards Grid */
-        .game-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-top: 8px;
-        }
-
-        .game-card {
-            background: var(--surface);
-            border: 3px solid var(--surface2);
-            padding: 28px 24px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .game-card:hover {
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 25px rgba(0,212,255,0.2), inset 0 0 25px rgba(0,212,255,0.05);
-            transform: translateY(-3px);
-        }
-
-        .game-card-icon {
-            font-size: 32px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .game-card-icon .x-mark {
-            color: var(--neon-pink);
-            text-shadow: 0 0 10px rgba(255,45,120,0.5);
-        }
-
-        .game-card-icon .o-mark {
-            color: var(--neon-cyan);
-            text-shadow: 0 0 10px rgba(0,212,255,0.5);
-        }
-
-        .game-card-title {
-            font-size: 12px;
-            color: var(--text-bright);
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
-
-        .game-card-desc {
-            font-size: 7px;
-            color: var(--text-dim);
-            line-height: 1.6;
-        }
-
-        /* Room Code */
-        .code-box {
-            background: var(--surface);
-            border: 3px solid var(--surface2);
-            padding: 24px;
-            margin: 16px 0;
-        }
-
-        .code-label {
-            font-size: 8px;
-            color: var(--text-dim);
-            margin-bottom: 16px;
-            letter-spacing: 2px;
-        }
-
-        .code-display {
-            font-size: 36px;
-            color: var(--neon-yellow);
-            text-shadow: 0 0 20px rgba(241,196,15,0.4);
-            letter-spacing: 8px;
-            text-transform: lowercase;
-            padding: 16px 0;
-            user-select: all;
-        }
-
-        .copy-btn {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 8px;
-            padding: 10px 20px;
-            background: transparent;
-            border: 2px solid var(--text-dim);
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: all 0.15s;
-            margin-top: 8px;
-        }
-
-        .copy-btn:hover {
-            border-color: var(--neon-yellow);
-            color: var(--neon-yellow);
-        }
-
-        .copy-btn.copied {
-            border-color: #4caf50;
-            color: #4caf50;
-        }
-
-        /* Status */
-        .status {
-            font-size: 8px;
-            padding: 16px;
-            margin-top: 8px;
-            letter-spacing: 1px;
-            line-height: 1.6;
-        }
-
-        .status-waiting {
-            color: var(--text-dim);
-            border: 2px solid var(--surface2);
-        }
-
-        .status-connecting {
-            color: var(--neon-yellow);
-            border: 2px solid rgba(241,196,15,0.3);
-        }
-
-        .status-connected {
-            color: #4caf50;
-            border: 2px solid rgba(76,175,80,0.3);
-        }
-
-        .status-error {
-            color: var(--neon-pink);
-            border: 2px solid rgba(255,45,120,0.3);
-        }
-
-        /* Input */
-        input[type="text"] {
-            font-family: 'Press Start 2P', monospace;
-            width: 100%;
-            padding: 16px;
-            background: var(--surface);
-            border: 3px solid var(--surface2);
-            color: var(--text);
-            font-size: 20px;
-            text-align: center;
-            text-transform: lowercase;
-            letter-spacing: 6px;
-            outline: none;
-            margin-bottom: 16px;
-            transition: border-color 0.2s;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 15px rgba(0,212,255,0.15);
-        }
-
-        input[type="text"]::placeholder {
-            color: #333;
-            font-size: 10px;
-            letter-spacing: 2px;
-        }
-
-        /* Game View */
-        #game-view {
-            flex-direction: column;
-            padding: 16px;
-        }
-
-        .game-container {
-            width: 100%;
-            max-width: 420px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            position: relative;
-        }
-
-        .game-header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-        }
-
-        .game-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .symbol-display {
-            font-size: 18px;
-            padding: 4px 10px;
-            border: 2px solid var(--neon-yellow);
-            color: var(--neon-yellow);
-        }
-
-        .turn-display {
-            font-size: 8px;
-            color: var(--text-dim);
-            letter-spacing: 1px;
-        }
-
-        .turn-display.active {
-            color: var(--neon-cyan);
-        }
-
-        .btn-small {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 7px;
-            padding: 8px 12px;
-            background: transparent;
-            border: 2px solid var(--text-dim);
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .btn-small:hover {
-            border-color: var(--neon-pink);
-            color: var(--neon-pink);
-        }
-
-        .scoreboard {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            font-size: 8px;
-            padding: 10px;
-            background: var(--surface);
-            border: 2px solid var(--surface2);
-        }
-
-        .score-x { color: var(--neon-pink); }
-        .score-o { color: var(--neon-cyan); }
-        .score-draw { color: var(--text-dim); }
-
-        /* Tic Tac Toe Board */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 4px;
-            width: 100%;
-            aspect-ratio: 1;
-            max-width: 320px;
-            background: var(--surface2);
-            padding: 4px;
-            margin: 8px 0;
-        }
-
-        .cell {
-            background: var(--surface);
-            border: none;
-            cursor: pointer;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-            aspect-ratio: 1;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .cell:hover:not(.cell-taken):not(.cell-disabled) {
-            background: rgba(0,212,255,0.08);
-        }
-
-        .cell:active:not(.cell-taken):not(.cell-disabled) {
-            transform: scale(0.95);
-        }
-
-        .cell-taken, .cell-disabled {
-            cursor: default;
-        }
-
-        .cell-x {
-            color: var(--neon-pink);
-            text-shadow: 0 0 15px rgba(255,45,120,0.5);
-        }
-
-        .cell-o {
-            color: var(--neon-cyan);
-            text-shadow: 0 0 15px rgba(0,212,255,0.5);
-        }
-
-        .cell-win {
-            background: rgba(241,196,15,0.15) !important;
-        }
-
-        .cell-win.cell-x {
-            text-shadow: 0 0 25px rgba(255,45,120,0.8), 0 0 50px rgba(255,45,120,0.4);
-        }
-
-        .cell-win.cell-o {
-            text-shadow: 0 0 25px rgba(0,212,255,0.8), 0 0 50px rgba(0,212,255,0.4);
-        }
-
-        /* Overlays */
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .overlay.hidden {
-            display: none;
-        }
-
-        .overlay-title {
-            font-size: 16px;
-            color: var(--neon-yellow);
-            text-shadow: 0 0 20px rgba(241,196,15,0.5);
-            text-align: center;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-
-        .overlay-sub {
-            font-size: 8px;
-            color: var(--text-dim);
-            text-align: center;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-
-        .overlay .btn {
-            max-width: 280px;
-        }
-
-        .disconnected-text {
-            color: var(--neon-pink);
-            text-shadow: 0 0 15px rgba(255,45,120,0.5);
-        }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            h1 { font-size: 16px; }
-            h2 { font-size: 11px; }
-            .container { padding: 16px; }
-            .code-display { font-size: 28px; letter-spacing: 6px; }
-            .game-card { padding: 20px 16px; }
-            .game-card-icon { font-size: 26px; }
-            .game-card-title { font-size: 10px; }
-            .cell { font-size: 30px; }
-            .scoreboard { font-size: 7px; gap: 12px; }
-            .overlay-title { font-size: 12px; }
-        }
-
-        @media (max-width: 360px) {
-            h1 { font-size: 13px; }
-            .code-display { font-size: 22px; letter-spacing: 4px; }
-            .cell { font-size: 24px; }
-            .btn { font-size: 9px; padding: 12px 16px; }
-        }
+        .animate-pulse-glow { animation: pulse-glow 1.5s infinite; }
+        .turn-display { font-size: 7px; color: #666; letter-spacing: 1px; }
+        .turn-display.active { color: #f1c40f; }
+        .status { font-size: 7px; padding: 12px; margin: 4px 0; letter-spacing: 1px; line-height: 1.6; text-align: center; }
+        .status-waiting { color: #666; border: 2px solid #1a1a2e; }
+        .status-connecting { color: #f1c40f; border: 2px solid rgba(241,196,15,0.3); }
+        .status-connected { color: #4caf50; border: 2px solid rgba(76,175,80,0.3); }
+        .status-error { color: #ff2d78; border: 2px solid rgba(255,45,120,0.3); }
+        .text-win { color: #4caf50; text-shadow: 0 0 20px rgba(76,175,80,0.5); }
+        .text-lose { color: #ff2d78; text-shadow: 0 0 20px rgba(255,45,120,0.5); }
+        .text-draw { color: #f1c40f; text-shadow: 0 0 20px rgba(241,196,15,0.5); }
+        .text-disconnected { color: #ff2d78; text-shadow: 0 0 15px rgba(255,45,120,0.5); }
+        .copied { border-color: #4caf50 !important; color: #4caf50 !important; }
+        canvas { cursor: pointer; }
+        .btn-neon { font-family: 'Press Start 2P', monospace; transition: all 0.15s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-neon:active { transform: scale(0.97); }
+        .btn-small { font-family: 'Press Start 2P', monospace; font-size: 6px; padding: 6px 10px; background: transparent; border: 2px solid #666; color: #666; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+        .btn-small:hover { border-color: #ff2d78; color: #ff2d78; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; }
     </style>
 </head>
-<body>
-    <!-- Landing View -->
-    <div id="landing-view" class="view">
-        <div class="container">
-            <h1>VINTAGE ARCADE</h1>
-            <p class="subtitle">CHALLENGE A FRIEND P2P</p>
-            <div class="game-grid">
-                <div class="game-card" onclick="pickGame('tictactoe')">
-                    <div class="game-card-icon">
-                        <span class="x-mark">X</span>
-                        <span class="o-mark">O</span>
-                    </div>
-                    <div class="game-card-title">TIC-TAC-TOE</div>
-                    <div class="game-card-desc">Classic 3-in-a-row duel</div>
+<body class="bg-[#0a0a0a] text-[#e0e0e0] h-screen overflow-hidden flex flex-col" style="font-family:'Press Start 2P',monospace;">
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="flex-shrink-0 flex items-center gap-3 px-6 py-3 bg-[#111116] border-b-2 border-[#1a1a2e] z-10 min-h-[48px]">
+        <button id="headerBack" class="hidden font-pixel text-[7px] bg-transparent border border-[#666] text-[#666] cursor-pointer px-2.5 py-1.5 transition-colors hover:border-[#ff2d78] hover:text-[#ff2d78]" onclick="handleBack()">← BACK</button>
+        <h1 class="text-[13px] text-[#ff2d78] tracking-wider" style="text-shadow:0 0 15px rgba(255,45,120,0.5);">VINTAGE ARCADE</h1>
+        <span class="text-[7px] text-[#666] tracking-wider max-sm:hidden">CHALLENGE A FRIEND P2P</span>
+    </div>
+
+    <!-- ═══ LANDING VIEW ═══ -->
+    <div id="landing-view" class="view active flex-1 flex flex-col items-center overflow-y-auto px-6 py-6">
+        <div id="gameGrid" class="w-full max-w-[700px] grid grid-cols-2 gap-4 max-[600px]:grid-cols-1 max-[600px]:max-w-[400px]"></div>
+    </div>
+
+    <!-- ═══ LOBBY VIEW ═══ -->
+    <div id="lobby-view" class="view hidden flex-1 flex overflow-hidden">
+        <div class="flex flex-1 md:flex-row flex-col">
+            <div class="md:flex-[0_0_65%] flex-[0_0_120px] overflow-hidden bg-[#080810]"><canvas id="lobbyArt" class="w-full h-full block"></canvas></div>
+            <div class="md:flex-[0_0_35%] flex-1 bg-[#111116] md:border-l-2 md:border-t-0 border-t-2 border-[#1a1a2e] flex flex-col items-center justify-center p-8 max-md:p-5 overflow-y-auto">
+                <div class="w-full max-w-[360px] text-center flex flex-col items-center">
+                    <div id="lobbyTitle" class="text-[15px] text-[#00d4ff] mb-1" style="text-shadow:0 0 15px rgba(0,212,255,0.4);">TIC-TAC-TOE</div>
+                    <div class="text-[8px] text-[#666] mb-5 tracking-wider">Choose your role</div>
+                    <button class="btn-neon w-full text-[10px] py-3.5 px-5 border-[3px] border-[#ff2d78] bg-transparent text-[#ff2d78] cursor-pointer mb-2.5 hover:bg-[#ff2d78] hover:text-[#0a0a0a] hover:shadow-[0_0_20px_rgba(255,45,120,0.5)]" onclick="createRoom()">CREATE ROOM</button>
+                    <button class="btn-neon w-full text-[10px] py-3.5 px-5 border-[3px] border-[#666] bg-transparent text-[#666] cursor-pointer mb-2.5 hover:bg-[#666] hover:text-[#0a0a0a]" onclick="showJoinView()">JOIN ROOM</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Lobby View -->
-    <div id="lobby-view" class="view hidden">
-        <div class="container">
-            <button class="back-btn" onclick="goToLanding()">← BACK</button>
-            <h2 id="lobby-title">TIC-TAC-TOE</h2>
-            <p class="subtitle" id="lobby-sub">Choose your role</p>
-            <button class="btn" onclick="createRoom()">CREATE ROOM</button>
-            <button class="btn btn-secondary" onclick="showJoinView()">JOIN ROOM</button>
-        </div>
-    </div>
-
-    <!-- Host View -->
-    <div id="host-view" class="view hidden">
-        <div class="container">
-            <button class="back-btn" onclick="cancelRoom()">← CANCEL</button>
-            <h2>YOUR ROOM</h2>
-            <div class="code-box">
-                <div class="code-label">ROOM CODE</div>
-                <div class="code-display" id="code-display"></div>
-                <button class="copy-btn" id="copy-btn" onclick="copyCode()">COPY</button>
+    <!-- ═══ HOST VIEW ═══ -->
+    <div id="host-view" class="view hidden flex-1 flex overflow-hidden">
+        <div class="flex flex-1 md:flex-row flex-col">
+            <div class="md:flex-[0_0_65%] flex-[0_0_120px] overflow-hidden bg-[#080810]"><canvas id="hostArt" class="w-full h-full block"></canvas></div>
+            <div class="md:flex-[0_0_35%] flex-1 bg-[#111116] md:border-l-2 md:border-t-0 border-t-2 border-[#1a1a2e] flex flex-col items-center justify-center p-8 max-md:p-5 overflow-y-auto">
+                <div class="w-full max-w-[360px] text-center flex flex-col items-center">
+                    <div class="text-[15px] text-[#00d4ff] mb-1" style="text-shadow:0 0 15px rgba(0,212,255,0.4);">YOUR ROOM</div>
+                    <div class="w-full bg-[#0a0a0a] border-[3px] border-[#1a1a2e] p-5 my-3">
+                        <div class="text-[7px] text-[#666] mb-3 tracking-wider">ROOM CODE</div>
+                        <div id="codeDisplay" class="text-[30px] text-[#f1c40f] tracking-[8px] py-3 select-all break-all" style="text-shadow:0 0 20px rgba(241,196,15,0.4);"></div>
+                        <button id="copyBtn" class="font-pixel text-[7px] px-4 py-2 bg-transparent border-2 border-[#666] text-[#666] cursor-pointer transition-colors hover:border-[#f1c40f] hover:text-[#f1c40f]" onclick="copyCode()">COPY</button>
+                    </div>
+                    <div id="hostStatus" class="status status-waiting">WAITING FOR OPPONENT...</div>
+                    <button id="startBtn" class="hidden btn-neon w-full text-[12px] py-4 px-5 border-[3px] border-[#f1c40f] bg-transparent text-[#f1c40f] cursor-pointer mt-3 animate-pulse-glow hover:bg-[#f1c40f] hover:text-[#0a0a0a]" onclick="startGame()">START GAME</button>
+                </div>
             </div>
-            <div class="status status-waiting" id="host-status">WAITING FOR OPPONENT...</div>
-            <button id="start-btn" class="btn btn-start hidden" onclick="startGame()">START GAME</button>
         </div>
     </div>
 
-    <!-- Join View -->
-    <div id="join-view" class="view hidden">
-        <div class="container">
-            <button class="back-btn" onclick="goToLobby()">← BACK</button>
-            <h2>JOIN ROOM</h2>
-            <input type="text" id="code-input" maxlength="6" placeholder="ENTER CODE" autocomplete="off" onkeypress="if(event.key==='Enter')joinRoom()">
-            <button class="btn" onclick="joinRoom()">CONNECT</button>
-            <div id="join-status" class="hidden"></div>
+    <!-- ═══ JOIN VIEW ═══ -->
+    <div id="join-view" class="view hidden flex-1 flex overflow-hidden">
+        <div class="flex flex-1 md:flex-row flex-col">
+            <div class="md:flex-[0_0_65%] flex-[0_0_120px] overflow-hidden bg-[#080810]"><canvas id="joinArt" class="w-full h-full block"></canvas></div>
+            <div class="md:flex-[0_0_35%] flex-1 bg-[#111116] md:border-l-2 md:border-t-0 border-t-2 border-[#1a1a2e] flex flex-col items-center justify-center p-8 max-md:p-5 overflow-y-auto">
+                <div class="w-full max-w-[360px] text-center flex flex-col items-center">
+                    <div class="text-[15px] text-[#00d4ff] mb-1" style="text-shadow:0 0 15px rgba(0,212,255,0.4);">JOIN ROOM</div>
+                    <input id="codeInput" type="text" maxlength="6" placeholder="CODE" autocomplete="off" class="font-pixel w-full px-4 py-3.5 bg-[#0a0a0a] border-[3px] border-[#1a1a2e] text-[#e0e0e0] text-[16px] text-center tracking-[8px] uppercase outline-none mb-3 transition-colors focus:border-[#00d4ff] placeholder:text-[#333] placeholder:text-[8px] placeholder:tracking-[2px] placeholder:normal-case" onkeypress="if(event.key==='Enter')joinRoom()">
+                    <button class="btn-neon w-full text-[10px] py-3.5 px-5 border-[3px] border-[#ff2d78] bg-transparent text-[#ff2d78] cursor-pointer mb-2.5 hover:bg-[#ff2d78] hover:text-[#0a0a0a] hover:shadow-[0_0_20px_rgba(255,45,120,0.5)]" onclick="joinRoom()">CONNECT</button>
+                    <div id="joinStatus" class="hidden"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Game View -->
-    <div id="game-view" class="view hidden">
-        <div class="game-container">
-            <div class="game-header">
-                <div class="game-info">
-                    <span class="symbol-display" id="my-symbol">X</span>
-                    <span class="turn-display" id="turn-display">YOUR TURN</span>
+    <!-- ═══ GAME VIEW ═══ -->
+    <div id="game-view" class="view hidden flex-1 flex-col items-center justify-center p-2 relative">
+        <div class="w-full max-w-[520px] max-h-full flex flex-col items-center gap-2 relative">
+            <div class="w-full flex justify-between items-center py-1">
+                <div class="flex items-center gap-2.5">
+                    <span id="gameBadge" class="text-[7px] text-[#00d4ff] px-2 py-1 border border-[#00d4ff] tracking-wider">GAME</span>
+                    <span id="turnDisplay" class="turn-display">YOUR TURN</span>
                 </div>
                 <button class="btn-small" onclick="leaveGame()">LEAVE</button>
             </div>
-            <div class="scoreboard">
-                <span class="score-x" id="score-x">X: 0</span>
-                <span class="score-draw" id="score-draw">DRAW: 0</span>
-                <span class="score-o" id="score-o">O: 0</span>
+            <div class="w-full flex-1 flex items-center justify-center min-h-0">
+                <canvas id="gameCanvas" class="block max-w-full max-h-full border-[3px] border-[#1a1a2e] bg-[#0a0a0a] max-sm:border-2"></canvas>
             </div>
-            <div class="board" id="board"></div>
 
             <!-- Game Over Overlay -->
-            <div id="gameover-overlay" class="overlay hidden">
-                <div class="overlay-title" id="gameover-title"></div>
-                <div class="overlay-sub" id="gameover-sub"></div>
-                <button class="btn" id="play-again-btn" onclick="playAgain()">PLAY AGAIN</button>
-                <button class="btn btn-secondary" onclick="leaveGame()">LEAVE</button>
+            <div id="gameoverOverlay" class="hidden absolute inset-0 bg-[rgba(0,0,0,0.88)] flex flex-col items-center justify-center gap-4 p-6 z-50">
+                <div id="gameoverTitle" class="text-[16px] text-center leading-relaxed max-sm:text-[13px]"></div>
+                <div id="gameoverSub" class="text-[7px] text-[#666] text-center leading-relaxed"></div>
+                <button class="btn-neon w-full max-w-[260px] text-[10px] py-3.5 px-5 border-[3px] border-[#ff2d78] bg-transparent text-[#ff2d78] cursor-pointer hover:bg-[#ff2d78] hover:text-[#0a0a0a]" onclick="playAgain()">PLAY AGAIN</button>
+                <button class="btn-neon w-full max-w-[260px] text-[10px] py-3.5 px-5 border-[3px] border-[#666] bg-transparent text-[#666] cursor-pointer hover:bg-[#666] hover:text-[#0a0a0a]" onclick="leaveGame()">LEAVE</button>
             </div>
 
             <!-- Disconnect Overlay -->
-            <div id="disconnect-overlay" class="overlay hidden">
-                <div class="overlay-title disconnected-text">CONNECTION LOST</div>
-                <div class="overlay-sub">Opponent disconnected</div>
-                <button class="btn btn-secondary" onclick="leaveGame()">BACK</button>
+            <div id="disconnectOverlay" class="hidden absolute inset-0 bg-[rgba(0,0,0,0.88)] flex flex-col items-center justify-center gap-4 p-6 z-50">
+                <div class="text-disconnected text-[16px] text-center leading-relaxed max-sm:text-[13px]">CONNECTION LOST</div>
+                <div class="text-[7px] text-[#666] text-center leading-relaxed">Opponent disconnected</div>
+                <button class="btn-neon w-full max-w-[260px] text-[10px] py-3.5 px-5 border-[3px] border-[#666] bg-transparent text-[#666] cursor-pointer hover:bg-[#666] hover:text-[#0a0a0a]" onclick="leaveGame()">BACK</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let peer = null;
-        let conn = null;
-        let roomCode = null;
-        let isHost = false;
-        let currentGame = null;
-
-        const scores = { X: 0, O: 0, draws: 0 };
-        let board = Array(9).fill(null);
-        let mySymbol = null;
-        let opponentSymbol = null;
-        let currentTurn = 'X';
-        let gameActive = false;
-        let winLine = null;
-
-        const WIN_LINES = [
-            [0,1,2], [3,4,5], [6,7,8],
-            [0,3,6], [1,4,7], [2,5,8],
-            [0,4,8], [2,4,6]
-        ];
-
-        function generateCode() {
-            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) {
-                code += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return code;
-        }
-
-        function showView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function goToLanding() {
-            cleanup();
-            showView('landing-view');
-        }
-
-        function goToLobby() {
-            showView('lobby-view');
-        }
-
-        function pickGame(game) {
-            currentGame = game;
-            document.getElementById('lobby-title').textContent = 'TIC-TAC-TOE';
-            showView('lobby-view');
-        }
-
-        function showJoinView() {
-            document.getElementById('code-input').value = '';
-            document.getElementById('code-input').focus();
-            document.getElementById('join-status').classList.add('hidden');
-            showView('join-view');
-        }
-
-        function setStatus(el, className, text) {
-            el.className = 'status ' + className;
-            el.textContent = text;
-            el.classList.remove('hidden');
-        }
-
-        function createRoom() {
-            roomCode = generateCode();
-            isHost = true;
-            document.getElementById('code-display').textContent = roomCode;
-            document.getElementById('start-btn').classList.add('hidden');
-            const st = document.getElementById('host-status');
-            st.className = 'status status-waiting';
-            st.textContent = 'WAITING FOR OPPONENT...';
-            showView('host-view');
-
-            peer = new Peer(roomCode);
-
-            peer.on('open', () => {});
-
-            peer.on('connection', (connection) => {
-                conn = connection;
-                setupConnection();
-            });
-
-            peer.on('error', (err) => {
-                console.error(err);
-                if (err.type === 'unavailable-id') {
-                    setStatus(document.getElementById('host-status'), 'status-error', 'CODE TAKEN. CREATE AGAIN.');
-                }
-            });
-        }
-
-        function joinRoom() {
-            const input = document.getElementById('code-input');
-            const code = input.value.trim().toLowerCase();
-            if (!/^[a-z0-9]{6}$/.test(code)) {
-                setStatus(document.getElementById('join-status'), 'status-error', 'ENTER A 6-CHAR CODE');
-                return;
-            }
-
-            roomCode = code;
-            isHost = false;
-            const st = document.getElementById('join-status');
-            setStatus(st, 'status-connecting', 'CONNECTING...');
-            showView('join-view');
-
-            peer = new Peer();
-
-            peer.on('open', () => {
-                conn = peer.connect(roomCode);
-                conn.on('open', () => {
-                    conn.on('data', handleMessage);
-                    conn.on('close', handleDisconnect);
-                    setStatus(st, 'status-connected', 'CONNECTED! WAITING FOR HOST...');
-                });
-                conn.on('error', () => {
-                    setStatus(st, 'status-error', 'CONNECTION FAILED');
-                });
-            });
-
-            peer.on('error', (err) => {
-                console.error(err);
-                if (err.type === 'peer-unavailable') {
-                    setStatus(document.getElementById('join-status'), 'status-error', 'ROOM NOT FOUND');
-                } else {
-                    setStatus(document.getElementById('join-status'), 'status-error', 'CONNECTION ERROR');
-                }
-            });
-        }
-
-        function setupConnection() {
-            conn.on('data', handleMessage);
-            conn.on('close', handleDisconnect);
-
-            document.getElementById('start-btn').classList.remove('hidden');
-            const st = document.getElementById('host-status');
-            st.className = 'status status-connected';
-            st.textContent = 'OPPONENT CONNECTED!';
-        }
-
-        function handleMessage(data) {
-            switch (data.type) {
-                case 'start':
-                    mySymbol = data.symbol;
-                    opponentSymbol = mySymbol === 'X' ? 'O' : 'X';
-                    enterGame();
-                    break;
-                case 'move':
-                    if (gameActive) {
-                        applyMove(data.index);
-                    }
-                    break;
-                case 'play-again':
-                    resetBoard();
-                    hideOverlays();
-                    break;
-            }
-        }
-
-        function startGame() {
-            const symbols = ['X', 'O'];
-            const hostSym = symbols[Math.random() < 0.5 ? 0 : 1];
-            mySymbol = hostSym;
-            opponentSymbol = mySymbol === 'X' ? 'O' : 'X';
-            conn.send({ type: 'start', symbol: opponentSymbol });
-            enterGame();
-        }
-
-        function enterGame() {
-            resetBoard();
-            hideOverlays();
-            winLine = null;
-            gameActive = true;
-            currentTurn = 'X';
-            document.getElementById('my-symbol').textContent = mySymbol;
-            updateTurnDisplay();
-            updateScoreDisplay();
-            document.getElementById('gameover-overlay').classList.add('hidden');
-            document.getElementById('disconnect-overlay').classList.add('hidden');
-            renderBoard();
-            showView('game-view');
-        }
-
-        function updateTurnDisplay() {
-            const el = document.getElementById('turn-display');
-            if (!gameActive) {
-                el.textContent = 'GAME OVER';
-                el.className = 'turn-display';
-                return;
-            }
-            if (currentTurn === mySymbol) {
-                el.textContent = 'YOUR TURN';
-                el.className = 'turn-display active';
-            } else {
-                el.textContent = 'OPPONENT\'S TURN';
-                el.className = 'turn-display';
-            }
-        }
-
-        function updateScoreDisplay() {
-            document.getElementById('score-x').textContent = 'X: ' + scores.X;
-            document.getElementById('score-o').textContent = 'O: ' + scores.O;
-            document.getElementById('score-draw').textContent = 'DRAW: ' + scores.draws;
-        }
-
-        function renderBoard() {
-            const boardEl = document.getElementById('board');
-            boardEl.innerHTML = '';
-            for (let i = 0; i < 9; i++) {
-                const cell = document.createElement('button');
-                cell.className = 'cell';
-                cell.dataset.index = i;
-                const mark = board[i];
-                if (mark) {
-                    cell.textContent = mark;
-                    cell.classList.add('cell-taken', mark === 'X' ? 'cell-x' : 'cell-o');
-                }
-                if (!gameActive || currentTurn !== mySymbol || mark) {
-                    cell.classList.add('cell-disabled');
-                }
-                if (winLine && winLine.includes(i)) {
-                    cell.classList.add('cell-win');
-                }
-                cell.addEventListener('click', () => cellClick(i));
-                boardEl.appendChild(cell);
-            }
-        }
-
-        function cellClick(index) {
-            if (!gameActive) return;
-            if (currentTurn !== mySymbol) return;
-            if (board[index] !== null) return;
-
-            board[index] = mySymbol;
-            conn.send({ type: 'move', index });
-            currentTurn = opponentSymbol;
-            renderBoard();
-            updateTurnDisplay();
-            checkGameOver();
-        }
-
-        function applyMove(index) {
-            board[index] = opponentSymbol;
-            currentTurn = mySymbol;
-            renderBoard();
-            updateTurnDisplay();
-            checkGameOver();
-        }
-
-        function checkGameOver() {
-            const result = checkWin(board);
-            if (result) {
-                gameActive = false;
-                winLine = result.line;
-                if (result.winner === 'X' || result.winner === 'O') {
-                    scores[result.winner]++;
-                } else {
-                    scores.draws++;
-                }
-                updateScoreDisplay();
-                renderBoard();
-                showGameOver(result);
-            } else if (!board.includes(null)) {
-                gameActive = false;
-                scores.draws++;
-                updateScoreDisplay();
-                renderBoard();
-                showGameOver({ winner: null });
-            }
-        }
-
-        function checkWin(b) {
-            for (const line of WIN_LINES) {
-                const [a, c, d] = line;
-                if (b[a] && b[a] === b[c] && b[a] === b[d]) {
-                    return { winner: b[a], line };
-                }
-            }
-            return null;
-        }
-
-        function showGameOver(result) {
-            const title = document.getElementById('gameover-title');
-            const sub = document.getElementById('gameover-sub');
-            if (result.winner) {
-                if (result.winner === mySymbol) {
-                    title.textContent = 'YOU WIN!';
-                    title.style.color = '#4caf50';
-                    title.style.textShadow = '0 0 20px rgba(76,175,80,0.5)';
-                } else {
-                    title.textContent = 'YOU LOSE!';
-                    title.style.color = '#ff2d78';
-                    title.style.textShadow = '0 0 20px rgba(255,45,120,0.5)';
-                }
-                sub.textContent = result.winner + ' TAKES THE ROUND!';
-            } else {
-                title.textContent = 'DRAW!';
-                title.style.color = '#f1c40f';
-                title.style.textShadow = '0 0 20px rgba(241,196,15,0.5)';
-                sub.textContent = 'NO WINNER THIS ROUND';
-            }
-            document.getElementById('gameover-overlay').classList.remove('hidden');
-        }
-
-        function hideOverlays() {
-            document.getElementById('gameover-overlay').classList.add('hidden');
-            document.getElementById('disconnect-overlay').classList.add('hidden');
-        }
-
-        function playAgain() {
-            if (conn && conn.open) {
-                conn.send({ type: 'play-again' });
-            }
-            resetBoard();
-            hideOverlays();
-        }
-
-        function resetBoard() {
-            board = Array(9).fill(null);
-            winLine = null;
-            gameActive = true;
-            currentTurn = 'X';
-            updateTurnDisplay();
-            renderBoard();
-        }
-
-        function handleDisconnect() {
-            gameActive = false;
-            document.getElementById('disconnect-overlay').classList.remove('hidden');
-        }
-
-        function leaveGame() {
-            cleanup();
-            goToLanding();
-        }
-
-        function cancelRoom() {
-            cleanup();
-            showView('lobby-view');
-        }
-
-        function cleanup() {
-            if (conn) {
-                try { conn.close(); } catch(e) {}
-                conn = null;
-            }
-            if (peer) {
-                try { peer.destroy(); } catch(e) {}
-                peer = null;
-            }
-            roomCode = null;
-            isHost = false;
-            currentGame = null;
-            board = Array(9).fill(null);
-            mySymbol = null;
-            opponentSymbol = null;
-            currentTurn = 'X';
-            gameActive = false;
-            winLine = null;
-            hideOverlays();
-        }
-
-        function copyCode() {
-            if (!roomCode) return;
-            navigator.clipboard.writeText(roomCode).then(() => {
-                const btn = document.getElementById('copy-btn');
-                btn.textContent = 'COPIED!';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'COPY';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
-    </script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
