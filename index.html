@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duel - P2P Room</title>
+    <title>Vintage Arcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111116;
+            --surface2: #1a1a2e;
+            --neon-pink: #ff2d78;
+            --neon-cyan: #00d4ff;
+            --neon-yellow: #f1c40f;
+            --text: #e0e0e0;
+            --text-dim: #666;
+            --text-bright: #fff;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,291 +26,593 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #fff;
+            font-family: 'Press Start 2P', monospace;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: unset;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.12) 0px,
+                rgba(0,0,0,0.12) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .view {
+            position: fixed;
+            inset: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            z-index: 1;
+        }
+
+        .view.hidden {
+            display: none;
         }
 
         .container {
             width: 100%;
-            max-width: 480px;
-        }
-
-        .card {
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 32px;
+            max-width: 520px;
+            padding: 24px;
             text-align: center;
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 22px;
+            color: var(--neon-pink);
+            text-shadow: 0 0 20px rgba(255,45,120,0.6), 0 0 60px rgba(255,45,120,0.3);
             margin-bottom: 8px;
-            color: #ff6b6b;
+            line-height: 1.4;
+        }
+
+        h2 {
+            font-size: 14px;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px rgba(0,212,255,0.5);
+            margin-bottom: 16px;
+            line-height: 1.6;
         }
 
         .subtitle {
-            color: #888;
+            font-size: 9px;
+            color: var(--text-dim);
             margin-bottom: 32px;
-            font-size: 14px;
+            letter-spacing: 2px;
         }
 
         .btn {
-            width: 100%;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            padding: 16px 24px;
+            border: 3px solid var(--neon-pink);
+            background: transparent;
+            color: var(--neon-pink);
             cursor: pointer;
-            transition: all 0.2s;
+            text-transform: uppercase;
+            transition: all 0.15s;
+            width: 100%;
             margin-bottom: 12px;
+            letter-spacing: 1px;
         }
 
-        .btn-primary {
-            background: #ff6b6b;
-            color: #fff;
+        .btn:hover {
+            background: var(--neon-pink);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(255,45,120,0.5), inset 0 0 20px rgba(255,45,120,0.2);
         }
 
-        .btn-primary:hover {
-            background: #ff5252;
+        .btn:active {
+            transform: scale(0.97);
         }
 
         .btn-secondary {
-            background: #333;
-            color: #fff;
+            border-color: var(--text-dim);
+            color: var(--text-dim);
         }
 
         .btn-secondary:hover {
-            background: #444;
+            background: var(--text-dim);
+            color: var(--bg);
+            box-shadow: none;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
-        .room-key-display {
-            background: #252525;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 24px 0;
-        }
-
-        .room-key {
-            font-size: 20px;
-            font-family: monospace;
-            color: #ff6b6b;
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .btn-start {
             font-size: 14px;
-        }
-
-        .copy-btn:hover {
-            background: #444;
-        }
-
-        .copy-btn.copied {
-            background: #4caf50;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            background: #252525;
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #ff6b6b;
-        }
-
-        input[type="text"]::placeholder {
-            color: #666;
-        }
-
-        .status {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+            animation: pulse-glow 1.5s infinite;
             margin-top: 16px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
         }
 
-        .status.waiting {
-            background: #2a2a2a;
-            color: #888;
+        .btn-start:hover {
+            background: var(--neon-yellow);
+            color: var(--bg);
+            box-shadow: 0 0 30px rgba(241,196,15,0.6);
         }
 
-        .status.connecting {
-            background: #2a2a1a;
-            color: #ffaa00;
-        }
-
-        .status.connected {
-            background: #1a2a1a;
-            color: #4caf50;
-        }
-
-        .status.error {
-            background: #2a1a1a;
-            color: #ff6b6b;
-        }
-
-        /* Chat styles */
-        .chat-container {
-            height: 400px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-header {
-            padding-bottom: 16px;
-            border-bottom: 1px solid #333;
-            margin-bottom: 16px;
-        }
-
-        .chat-header .room-id {
-            font-family: monospace;
-            color: #ff6b6b;
-            font-size: 14px;
-        }
-
-        .chat-header .connection-status {
-            font-size: 12px;
-            color: #4caf50;
-            margin-top: 4px;
-        }
-
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px 0;
-            margin-bottom: 16px;
-        }
-
-        .message {
-            padding: 10px 14px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            max-width: 80%;
-            text-align: left;
-            word-wrap: break-word;
-        }
-
-        .message.sent {
-            background: #ff6b6b;
-            color: #fff;
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.received {
-            background: #333;
-            color: #fff;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message .meta {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-
-        .chat-input-container {
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-input-container input {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .chat-input-container .btn {
-            width: auto;
-            margin-bottom: 0;
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(241,196,15,0.3); }
+            50% { box-shadow: 0 0 25px rgba(241,196,15,0.7); }
         }
 
         .back-btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 9px;
             background: none;
             border: none;
-            color: #888;
+            color: var(--text-dim);
             cursor: pointer;
-            font-size: 14px;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+            padding: 8px 0;
+            display: inline-block;
         }
 
         .back-btn:hover {
-            color: #fff;
+            color: var(--text);
+        }
+
+        /* Game Cards Grid */
+        .game-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .game-card {
+            background: var(--surface);
+            border: 3px solid var(--surface2);
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .game-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0,212,255,0.2), inset 0 0 25px rgba(0,212,255,0.05);
+            transform: translateY(-3px);
+        }
+
+        .game-card-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .game-card-icon .x-mark {
+            color: var(--neon-pink);
+            text-shadow: 0 0 10px rgba(255,45,120,0.5);
+        }
+
+        .game-card-icon .o-mark {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0,212,255,0.5);
+        }
+
+        .game-card-title {
+            font-size: 12px;
+            color: var(--text-bright);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .game-card-desc {
+            font-size: 7px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Room Code */
+        .code-box {
+            background: var(--surface);
+            border: 3px solid var(--surface2);
+            padding: 24px;
+            margin: 16px 0;
+        }
+
+        .code-label {
+            font-size: 8px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .code-display {
+            font-size: 36px;
+            color: var(--neon-yellow);
+            text-shadow: 0 0 20px rgba(241,196,15,0.4);
+            letter-spacing: 8px;
+            text-transform: lowercase;
+            padding: 16px 0;
+            user-select: all;
+        }
+
+        .copy-btn {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid var(--text-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 8px;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+
+        .copy-btn.copied {
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+
+        /* Status */
+        .status {
+            font-size: 8px;
+            padding: 16px;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        .status-waiting {
+            color: var(--text-dim);
+            border: 2px solid var(--surface2);
+        }
+
+        .status-connecting {
+            color: var(--neon-yellow);
+            border: 2px solid rgba(241,196,15,0.3);
+        }
+
+        .status-connected {
+            color: #4caf50;
+            border: 2px solid rgba(76,175,80,0.3);
+        }
+
+        .status-error {
+            color: var(--neon-pink);
+            border: 2px solid rgba(255,45,120,0.3);
+        }
+
+        /* Input */
+        input[type="text"] {
+            font-family: 'Press Start 2P', monospace;
+            width: 100%;
+            padding: 16px;
+            background: var(--surface);
+            border: 3px solid var(--surface2);
+            color: var(--text);
+            font-size: 20px;
+            text-align: center;
+            text-transform: lowercase;
+            letter-spacing: 6px;
+            outline: none;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0,212,255,0.15);
+        }
+
+        input[type="text"]::placeholder {
+            color: #333;
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        /* Game View */
+        #game-view {
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .symbol-display {
+            font-size: 18px;
+            padding: 4px 10px;
+            border: 2px solid var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+
+        .turn-display {
+            font-size: 8px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .turn-display.active {
+            color: var(--neon-cyan);
+        }
+
+        .btn-small {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 7px;
+            padding: 8px 12px;
+            background: transparent;
+            border: 2px solid var(--text-dim);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-small:hover {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .scoreboard {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 8px;
+            padding: 10px;
+            background: var(--surface);
+            border: 2px solid var(--surface2);
+        }
+
+        .score-x { color: var(--neon-pink); }
+        .score-o { color: var(--neon-cyan); }
+        .score-draw { color: var(--text-dim); }
+
+        /* Tic Tac Toe Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 320px;
+            background: var(--surface2);
+            padding: 4px;
+            margin: 8px 0;
+        }
+
+        .cell {
+            background: var(--surface);
+            border: none;
+            cursor: pointer;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+            aspect-ratio: 1;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .cell:hover:not(.cell-taken):not(.cell-disabled) {
+            background: rgba(0,212,255,0.08);
+        }
+
+        .cell:active:not(.cell-taken):not(.cell-disabled) {
+            transform: scale(0.95);
+        }
+
+        .cell-taken, .cell-disabled {
+            cursor: default;
+        }
+
+        .cell-x {
+            color: var(--neon-pink);
+            text-shadow: 0 0 15px rgba(255,45,120,0.5);
+        }
+
+        .cell-o {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px rgba(0,212,255,0.5);
+        }
+
+        .cell-win {
+            background: rgba(241,196,15,0.15) !important;
+        }
+
+        .cell-win.cell-x {
+            text-shadow: 0 0 25px rgba(255,45,120,0.8), 0 0 50px rgba(255,45,120,0.4);
+        }
+
+        .cell-win.cell-o {
+            text-shadow: 0 0 25px rgba(0,212,255,0.8), 0 0 50px rgba(0,212,255,0.4);
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .overlay-title {
+            font-size: 16px;
+            color: var(--neon-yellow);
+            text-shadow: 0 0 20px rgba(241,196,15,0.5);
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .overlay-sub {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .overlay .btn {
+            max-width: 280px;
+        }
+
+        .disconnected-text {
+            color: var(--neon-pink);
+            text-shadow: 0 0 15px rgba(255,45,120,0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            h1 { font-size: 16px; }
+            h2 { font-size: 11px; }
+            .container { padding: 16px; }
+            .code-display { font-size: 28px; letter-spacing: 6px; }
+            .game-card { padding: 20px 16px; }
+            .game-card-icon { font-size: 26px; }
+            .game-card-title { font-size: 10px; }
+            .cell { font-size: 30px; }
+            .scoreboard { font-size: 7px; gap: 12px; }
+            .overlay-title { font-size: 12px; }
+        }
+
+        @media (max-width: 360px) {
+            h1 { font-size: 13px; }
+            .code-display { font-size: 22px; letter-spacing: 4px; }
+            .cell { font-size: 24px; }
+            .btn { font-size: 9px; padding: 12px 16px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <!-- Landing View -->
-            <div id="landing-view">
-                <h1>⚔️ Duel</h1>
-                <p class="subtitle">P2P Room Connector</p>
-                <button class="btn btn-primary" onclick="createRoom()">Create Room</button>
-                <button class="btn btn-secondary" onclick="showJoinView()">Join Room</button>
-            </div>
-
-            <!-- Create Room View -->
-            <div id="create-view" class="hidden">
-                <h1>Room Created</h1>
-                <p class="subtitle">Share this key with your opponent</p>
-                <div class="room-key-display">
-                    <div class="room-key" id="room-key-text"></div>
-                    <button class="copy-btn" onclick="copyRoomKey()">Copy Key</button>
-                </div>
-                <div class="status waiting" id="create-status">Waiting for opponent to join...</div>
-                <button class="btn btn-secondary" onclick="reset()">Back</button>
-            </div>
-
-            <!-- Join Room View -->
-            <div id="join-view" class="hidden">
-                <h1>Join Room</h1>
-                <p class="subtitle">Enter the room key</p>
-                <input type="text" id="room-key-input" placeholder="duel-xxxxx" autocomplete="off">
-                <button class="btn btn-primary" onclick="joinRoom()">Connect</button>
-                <button class="btn btn-secondary" onclick="reset()">Back</button>
-                <div class="status hidden" id="join-status"></div>
-            </div>
-
-            <!-- Chat View -->
-            <div id="chat-view" class="hidden">
-                <button class="back-btn" onclick="reset()">← Leave</button>
-                <div class="chat-container">
-                    <div class="chat-header">
-                        <div class="room-id" id="chat-room-id"></div>
-                        <div class="connection-status" id="connection-status">Connected</div>
+    <!-- Landing View -->
+    <div id="landing-view" class="view">
+        <div class="container">
+            <h1>VINTAGE ARCADE</h1>
+            <p class="subtitle">CHALLENGE A FRIEND P2P</p>
+            <div class="game-grid">
+                <div class="game-card" onclick="pickGame('tictactoe')">
+                    <div class="game-card-icon">
+                        <span class="x-mark">X</span>
+                        <span class="o-mark">O</span>
                     </div>
-                    <div class="messages" id="messages"></div>
-                    <div class="chat-input-container">
-                        <input type="text" id="message-input" placeholder="Type a message..." onkeypress="handleMessageKeypress(event)">
-                        <button class="btn btn-primary" onclick="sendMessage()" style="width: auto;">Send</button>
-                    </div>
+                    <div class="game-card-title">TIC-TAC-TOE</div>
+                    <div class="game-card-desc">Classic 3-in-a-row duel</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby View -->
+    <div id="lobby-view" class="view hidden">
+        <div class="container">
+            <button class="back-btn" onclick="goToLanding()">← BACK</button>
+            <h2 id="lobby-title">TIC-TAC-TOE</h2>
+            <p class="subtitle" id="lobby-sub">Choose your role</p>
+            <button class="btn" onclick="createRoom()">CREATE ROOM</button>
+            <button class="btn btn-secondary" onclick="showJoinView()">JOIN ROOM</button>
+        </div>
+    </div>
+
+    <!-- Host View -->
+    <div id="host-view" class="view hidden">
+        <div class="container">
+            <button class="back-btn" onclick="cancelRoom()">← CANCEL</button>
+            <h2>YOUR ROOM</h2>
+            <div class="code-box">
+                <div class="code-label">ROOM CODE</div>
+                <div class="code-display" id="code-display"></div>
+                <button class="copy-btn" id="copy-btn" onclick="copyCode()">COPY</button>
+            </div>
+            <div class="status status-waiting" id="host-status">WAITING FOR OPPONENT...</div>
+            <button id="start-btn" class="btn btn-start hidden" onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+
+    <!-- Join View -->
+    <div id="join-view" class="view hidden">
+        <div class="container">
+            <button class="back-btn" onclick="goToLobby()">← BACK</button>
+            <h2>JOIN ROOM</h2>
+            <input type="text" id="code-input" maxlength="6" placeholder="ENTER CODE" autocomplete="off" onkeypress="if(event.key==='Enter')joinRoom()">
+            <button class="btn" onclick="joinRoom()">CONNECT</button>
+            <div id="join-status" class="hidden"></div>
+        </div>
+    </div>
+
+    <!-- Game View -->
+    <div id="game-view" class="view hidden">
+        <div class="game-container">
+            <div class="game-header">
+                <div class="game-info">
+                    <span class="symbol-display" id="my-symbol">X</span>
+                    <span class="turn-display" id="turn-display">YOUR TURN</span>
+                </div>
+                <button class="btn-small" onclick="leaveGame()">LEAVE</button>
+            </div>
+            <div class="scoreboard">
+                <span class="score-x" id="score-x">X: 0</span>
+                <span class="score-draw" id="score-draw">DRAW: 0</span>
+                <span class="score-o" id="score-o">O: 0</span>
+            </div>
+            <div class="board" id="board"></div>
+
+            <!-- Game Over Overlay -->
+            <div id="gameover-overlay" class="overlay hidden">
+                <div class="overlay-title" id="gameover-title"></div>
+                <div class="overlay-sub" id="gameover-sub"></div>
+                <button class="btn" id="play-again-btn" onclick="playAgain()">PLAY AGAIN</button>
+                <button class="btn btn-secondary" onclick="leaveGame()">LEAVE</button>
+            </div>
+
+            <!-- Disconnect Overlay -->
+            <div id="disconnect-overlay" class="overlay hidden">
+                <div class="overlay-title disconnected-text">CONNECTION LOST</div>
+                <div class="overlay-sub">Opponent disconnected</div>
+                <button class="btn btn-secondary" onclick="leaveGame()">BACK</button>
             </div>
         </div>
     </div>
@@ -305,38 +620,79 @@
     <script>
         let peer = null;
         let conn = null;
-        let roomKey = null;
+        let roomCode = null;
         let isHost = false;
+        let currentGame = null;
 
-        function generateRoomKey() {
+        const scores = { X: 0, O: 0, draws: 0 };
+        let board = Array(9).fill(null);
+        let mySymbol = null;
+        let opponentSymbol = null;
+        let currentTurn = 'X';
+        let gameActive = false;
+        let winLine = null;
+
+        const WIN_LINES = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+
+        function generateCode() {
             const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-            let key = 'duel-';
-            for (let i = 0; i < 10; i++) {
-                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
             }
-            return key;
+            return code;
         }
 
-        function showView(viewId) {
-            document.querySelectorAll('.card > div').forEach(div => {
-                div.classList.add('hidden');
-            });
-            document.getElementById(viewId).classList.remove('hidden');
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function goToLanding() {
+            cleanup();
+            showView('landing-view');
+        }
+
+        function goToLobby() {
+            showView('lobby-view');
+        }
+
+        function pickGame(game) {
+            currentGame = game;
+            document.getElementById('lobby-title').textContent = 'TIC-TAC-TOE';
+            showView('lobby-view');
+        }
+
+        function showJoinView() {
+            document.getElementById('code-input').value = '';
+            document.getElementById('code-input').focus();
+            document.getElementById('join-status').classList.add('hidden');
+            showView('join-view');
+        }
+
+        function setStatus(el, className, text) {
+            el.className = 'status ' + className;
+            el.textContent = text;
+            el.classList.remove('hidden');
         }
 
         function createRoom() {
-            roomKey = generateRoomKey();
+            roomCode = generateCode();
             isHost = true;
-            
-            document.getElementById('room-key-text').textContent = roomKey;
-            showView('create-view');
-            updateStatus('create-status', 'waiting', 'Waiting for opponent to join...');
+            document.getElementById('code-display').textContent = roomCode;
+            document.getElementById('start-btn').classList.add('hidden');
+            const st = document.getElementById('host-status');
+            st.className = 'status status-waiting';
+            st.textContent = 'WAITING FOR OPPONENT...';
+            showView('host-view');
 
-            peer = new Peer(roomKey);
+            peer = new Peer(roomCode);
 
-            peer.on('open', (id) => {
-                console.log('Host peer opened with ID:', id);
-            });
+            peer.on('open', () => {});
 
             peer.on('connection', (connection) => {
                 conn = connection;
@@ -344,171 +700,294 @@
             });
 
             peer.on('error', (err) => {
-                console.error('Peer error:', err);
+                console.error(err);
                 if (err.type === 'unavailable-id') {
-                    updateStatus('create-status', 'error', 'Room already exists!');
-                } else if (err.type === 'peer-unavailable') {
-                    updateStatus('create-status', 'error', 'Room not found');
-                } else {
-                    updateStatus('create-status', 'error', 'Connection error: ' + err.type);
+                    setStatus(document.getElementById('host-status'), 'status-error', 'CODE TAKEN. CREATE AGAIN.');
                 }
             });
         }
 
-        function showJoinView() {
-            showView('join-view');
-            document.getElementById('room-key-input').value = '';
-            document.getElementById('room-key-input').focus();
-        }
-
         function joinRoom() {
-            const inputKey = document.getElementById('room-key-input').value.trim().toLowerCase();
-            
-            if (!inputKey) {
-                updateStatus('join-status', 'error', 'Please enter a room key');
+            const input = document.getElementById('code-input');
+            const code = input.value.trim().toLowerCase();
+            if (!/^[a-z0-9]{6}$/.test(code)) {
+                setStatus(document.getElementById('join-status'), 'status-error', 'ENTER A 6-CHAR CODE');
                 return;
             }
 
-            if (!inputKey.startsWith('duel-')) {
-                updateStatus('join-status', 'error', 'Invalid room key format');
-                return;
-            }
-
-            roomKey = inputKey;
+            roomCode = code;
             isHost = false;
-            
+            const st = document.getElementById('join-status');
+            setStatus(st, 'status-connecting', 'CONNECTING...');
             showView('join-view');
-            updateStatus('join-status', 'connecting', 'Connecting to room...');
 
             peer = new Peer();
 
             peer.on('open', () => {
-                conn = peer.connect(roomKey);
-                setupConnection();
+                conn = peer.connect(roomCode);
+                conn.on('open', () => {
+                    conn.on('data', handleMessage);
+                    conn.on('close', handleDisconnect);
+                    setStatus(st, 'status-connected', 'CONNECTED! WAITING FOR HOST...');
+                });
+                conn.on('error', () => {
+                    setStatus(st, 'status-error', 'CONNECTION FAILED');
+                });
             });
 
             peer.on('error', (err) => {
-                console.error('Peer error:', err);
+                console.error(err);
                 if (err.type === 'peer-unavailable') {
-                    updateStatus('join-status', 'error', 'Room not found');
+                    setStatus(document.getElementById('join-status'), 'status-error', 'ROOM NOT FOUND');
                 } else {
-                    updateStatus('join-status', 'error', 'Connection error: ' + err.type);
+                    setStatus(document.getElementById('join-status'), 'status-error', 'CONNECTION ERROR');
                 }
             });
         }
 
         function setupConnection() {
-            conn.on('open', () => {
-                console.log('Connection opened!');
-                if (isHost) {
-                    updateStatus('create-status', 'connected', 'Opponent joined!');
-                } else {
-                    updateStatus('join-status', 'connected', 'Connected to room!');
+            conn.on('data', handleMessage);
+            conn.on('close', handleDisconnect);
+
+            document.getElementById('start-btn').classList.remove('hidden');
+            const st = document.getElementById('host-status');
+            st.className = 'status status-connected';
+            st.textContent = 'OPPONENT CONNECTED!';
+        }
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'start':
+                    mySymbol = data.symbol;
+                    opponentSymbol = mySymbol === 'X' ? 'O' : 'X';
+                    enterGame();
+                    break;
+                case 'move':
+                    if (gameActive) {
+                        applyMove(data.index);
+                    }
+                    break;
+                case 'play-again':
+                    resetBoard();
+                    hideOverlays();
+                    break;
+            }
+        }
+
+        function startGame() {
+            const symbols = ['X', 'O'];
+            const hostSym = symbols[Math.random() < 0.5 ? 0 : 1];
+            mySymbol = hostSym;
+            opponentSymbol = mySymbol === 'X' ? 'O' : 'X';
+            conn.send({ type: 'start', symbol: opponentSymbol });
+            enterGame();
+        }
+
+        function enterGame() {
+            resetBoard();
+            hideOverlays();
+            winLine = null;
+            gameActive = true;
+            currentTurn = 'X';
+            document.getElementById('my-symbol').textContent = mySymbol;
+            updateTurnDisplay();
+            updateScoreDisplay();
+            document.getElementById('gameover-overlay').classList.add('hidden');
+            document.getElementById('disconnect-overlay').classList.add('hidden');
+            renderBoard();
+            showView('game-view');
+        }
+
+        function updateTurnDisplay() {
+            const el = document.getElementById('turn-display');
+            if (!gameActive) {
+                el.textContent = 'GAME OVER';
+                el.className = 'turn-display';
+                return;
+            }
+            if (currentTurn === mySymbol) {
+                el.textContent = 'YOUR TURN';
+                el.className = 'turn-display active';
+            } else {
+                el.textContent = 'OPPONENT\'S TURN';
+                el.className = 'turn-display';
+            }
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('score-x').textContent = 'X: ' + scores.X;
+            document.getElementById('score-o').textContent = 'O: ' + scores.O;
+            document.getElementById('score-draw').textContent = 'DRAW: ' + scores.draws;
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('button');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                const mark = board[i];
+                if (mark) {
+                    cell.textContent = mark;
+                    cell.classList.add('cell-taken', mark === 'X' ? 'cell-x' : 'cell-o');
                 }
-                
-                setTimeout(() => {
-                    showChatView();
-                }, 500);
-            });
-
-            conn.on('data', (data) => {
-                receiveMessage(data);
-            });
-
-            conn.on('close', () => {
-                document.getElementById('connection-status').textContent = 'Disconnected';
-                document.getElementById('connection-status').style.color = '#ff6b6b';
-            });
-        }
-
-        function showChatView() {
-            document.getElementById('chat-room-id').textContent = roomKey;
-            document.getElementById('messages').innerHTML = '';
-            showView('chat-view');
-            document.getElementById('message-input').focus();
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const message = input.value.trim();
-            
-            if (message && conn && conn.open) {
-                const messageData = {
-                    text: message,
-                    timestamp: Date.now()
-                };
-                
-                conn.send(messageData);
-                displayMessage(messageData, 'sent');
-                input.value = '';
+                if (!gameActive || currentTurn !== mySymbol || mark) {
+                    cell.classList.add('cell-disabled');
+                }
+                if (winLine && winLine.includes(i)) {
+                    cell.classList.add('cell-win');
+                }
+                cell.addEventListener('click', () => cellClick(i));
+                boardEl.appendChild(cell);
             }
         }
 
-        function receiveMessage(data) {
-            displayMessage(data, 'received');
+        function cellClick(index) {
+            if (!gameActive) return;
+            if (currentTurn !== mySymbol) return;
+            if (board[index] !== null) return;
+
+            board[index] = mySymbol;
+            conn.send({ type: 'move', index });
+            currentTurn = opponentSymbol;
+            renderBoard();
+            updateTurnDisplay();
+            checkGameOver();
         }
 
-        function displayMessage(data, type) {
-            const messagesDiv = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            
-            const time = new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            messageDiv.innerHTML = `
-                ${escapeHtml(data.text)}
-                <div class="meta">${time}</div>
-            `;
-            
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        function applyMove(index) {
+            board[index] = opponentSymbol;
+            currentTurn = mySymbol;
+            renderBoard();
+            updateTurnDisplay();
+            checkGameOver();
         }
 
-        function handleMessageKeypress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+        function checkGameOver() {
+            const result = checkWin(board);
+            if (result) {
+                gameActive = false;
+                winLine = result.line;
+                if (result.winner === 'X' || result.winner === 'O') {
+                    scores[result.winner]++;
+                } else {
+                    scores.draws++;
+                }
+                updateScoreDisplay();
+                renderBoard();
+                showGameOver(result);
+            } else if (!board.includes(null)) {
+                gameActive = false;
+                scores.draws++;
+                updateScoreDisplay();
+                renderBoard();
+                showGameOver({ winner: null });
             }
         }
 
-        function copyRoomKey() {
-            navigator.clipboard.writeText(roomKey).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                btn.textContent = 'Copied!';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = 'Copy Key';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
+        function checkWin(b) {
+            for (const line of WIN_LINES) {
+                const [a, c, d] = line;
+                if (b[a] && b[a] === b[c] && b[a] === b[d]) {
+                    return { winner: b[a], line };
+                }
+            }
+            return null;
         }
 
-        function updateStatus(elementId, status, message) {
-            const el = document.getElementById(elementId);
-            el.className = `status ${status}`;
-            el.textContent = message;
-            el.classList.remove('hidden');
+        function showGameOver(result) {
+            const title = document.getElementById('gameover-title');
+            const sub = document.getElementById('gameover-sub');
+            if (result.winner) {
+                if (result.winner === mySymbol) {
+                    title.textContent = 'YOU WIN!';
+                    title.style.color = '#4caf50';
+                    title.style.textShadow = '0 0 20px rgba(76,175,80,0.5)';
+                } else {
+                    title.textContent = 'YOU LOSE!';
+                    title.style.color = '#ff2d78';
+                    title.style.textShadow = '0 0 20px rgba(255,45,120,0.5)';
+                }
+                sub.textContent = result.winner + ' TAKES THE ROUND!';
+            } else {
+                title.textContent = 'DRAW!';
+                title.style.color = '#f1c40f';
+                title.style.textShadow = '0 0 20px rgba(241,196,15,0.5)';
+                sub.textContent = 'NO WINNER THIS ROUND';
+            }
+            document.getElementById('gameover-overlay').classList.remove('hidden');
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function hideOverlays() {
+            document.getElementById('gameover-overlay').classList.add('hidden');
+            document.getElementById('disconnect-overlay').classList.add('hidden');
         }
 
-        function reset() {
+        function playAgain() {
+            if (conn && conn.open) {
+                conn.send({ type: 'play-again' });
+            }
+            resetBoard();
+            hideOverlays();
+        }
+
+        function resetBoard() {
+            board = Array(9).fill(null);
+            winLine = null;
+            gameActive = true;
+            currentTurn = 'X';
+            updateTurnDisplay();
+            renderBoard();
+        }
+
+        function handleDisconnect() {
+            gameActive = false;
+            document.getElementById('disconnect-overlay').classList.remove('hidden');
+        }
+
+        function leaveGame() {
+            cleanup();
+            goToLanding();
+        }
+
+        function cancelRoom() {
+            cleanup();
+            showView('lobby-view');
+        }
+
+        function cleanup() {
             if (conn) {
-                conn.close();
+                try { conn.close(); } catch(e) {}
                 conn = null;
             }
             if (peer) {
-                peer.destroy();
+                try { peer.destroy(); } catch(e) {}
                 peer = null;
             }
-            roomKey = null;
+            roomCode = null;
             isHost = false;
-            document.getElementById('messages').innerHTML = '';
-            document.getElementById('join-status').classList.add('hidden');
-            showView('landing-view');
+            currentGame = null;
+            board = Array(9).fill(null);
+            mySymbol = null;
+            opponentSymbol = null;
+            currentTurn = 'X';
+            gameActive = false;
+            winLine = null;
+            hideOverlays();
+        }
+
+        function copyCode() {
+            if (!roomCode) return;
+            navigator.clipboard.writeText(roomCode).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
         }
     </script>
 </body>
