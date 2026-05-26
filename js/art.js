@@ -1,4 +1,4 @@
-export function generateArt(canvasEl) {
+function generateArt(canvasEl) {
     if (!canvasEl) return;
     const parent = canvasEl.parentElement;
     const rect = parent.getBoundingClientRect();

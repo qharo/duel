@@ -1,8 +1,4 @@
-import { state } from '../state.js';
-import { showView, hideOverlays, updateTurnDisplay } from '../view-utils.js';
-import { setupCanvas } from '../canvas-utils.js';
-
-export const connect4Impl = {
+const connect4Impl = {
     board: null,
     currentTurn: 'X',
     gameActive: false,

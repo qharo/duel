@@ -1,8 +1,4 @@
-import { state } from '../state.js';
-import { showView, hideOverlays, updateTurnDisplay } from '../view-utils.js';
-import { setupCanvas, drawGrid } from '../canvas-utils.js';
-
-export const tictactoeImpl = {
+const tictactoeImpl = {
     board: null,
     currentTurn: 'X',
     winLine: null,

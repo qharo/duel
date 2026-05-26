@@ -1,4 +1,4 @@
-export function setupCanvas(id, cols, rows, margin) {
+function setupCanvas(id, cols, rows, margin) {
     const canvas = document.getElementById(id);
     const wrap = canvas.parentElement;
     const wrapRect = wrap.getBoundingClientRect();
@@ -17,7 +17,7 @@ export function setupCanvas(id, cols, rows, margin) {
     return { canvas, ctx, cellSize, totalW, totalH, margin, cols, rows };
 }
 
-export function drawGrid(ctx, cols, rows, cellSize, margin, ox, oy) {
+function drawGrid(ctx, cols, rows, cellSize, margin, ox, oy) {
     ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     ctx.lineWidth = 1;
     for (let r = 0; r <= rows; r++) {
